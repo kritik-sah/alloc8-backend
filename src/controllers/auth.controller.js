@@ -10,7 +10,7 @@ export const signIn = async (req, res) => {
     const referralCode = await generateUniqueReferralCode();
 
     const user = await User.findOne({ address });
-    const referredByUser = await User.findOne({ referredBy });
+    const referredByUser = await User.findOne({ referralCode: referredBy });
 
     if (user) {
       const isPasswordCorrect = await bcrypt.compare(
@@ -39,10 +39,8 @@ export const signIn = async (req, res) => {
       address,
       password: hashedPassword,
       referralCode,
-      referredBy,
+      referredBy: referredByUser?.address || "",
     });
-
-    await newUser.save();
 
     // Update referredByUser's referredUsers array
     if (referredByUser) {
@@ -52,6 +50,8 @@ export const signIn = async (req, res) => {
       );
     }
 
+    await newUser.save(); // its not working how can we fix that
+    console.log("newUser", newUser._id);
     generateTokenAndSetCookie(newUser._id, res);
 
     const { password: userPassword, ...userDetails } = newUser._doc;
@@ -62,6 +62,7 @@ export const signIn = async (req, res) => {
     });
     // for new users
   } catch (error) {
+    console.log("error", error);
     res.status(500).json({ error: error });
   }
 };
